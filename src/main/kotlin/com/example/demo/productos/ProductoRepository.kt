@@ -13,7 +13,7 @@ import java.time.LocalDateTime
 @Repository
 interface ProductoRepository : JpaRepository<Producto, Long> {
 
-    // ===== BÚSQUEDAS SIMPLES (derivadas del nombre) =====
+    // ===== BÚSQUEDAS SIMPLES =====
     fun findByNombre(nombre: String): List<Producto>
     fun findByNombreContainingIgnoreCase(nombre: String): List<Producto>
     fun findByNombreStartingWith(nombre: String): List<Producto>
@@ -51,33 +51,32 @@ interface ProductoRepository : JpaRepository<Producto, Long> {
     fun findByStockBetween(min: Int, max: Int): List<Producto>
     fun findByStockIsNull(): List<Producto>
 
-    // ===== COMBINADOS (AND / OR) =====
+    // ===== COMBINADOS =====
     fun findByCategoriaAndActivoTrue(categoria: String): List<Producto>
-    fun findByCategoriaAndActivoFalse(categoria: String): List<Producto>
     fun findByNombreContainingIgnoreCaseAndActivoTrue(nombre: String): List<Producto>
     fun findByPrecioBetweenAndActivoTrue(min: BigDecimal, max: BigDecimal): List<Producto>
 
-    // ===== CON ORDENAMIENTO =====
+    // ===== ORDENAMIENTO =====
     fun findByActivoTrueOrderByNombreAsc(): List<Producto>
     fun findByActivoTrueOrderByPrecioDesc(): List<Producto>
     fun findByCategoriaOrderByNombreAsc(categoria: String): List<Producto>
     fun findByStockLessThanOrderByStockAsc(stock: Int): List<Producto>
 
-    // ===== CON PAGINACIÓN (Pageable) =====
+    // ===== PAGINACIÓN =====
     fun findByNombreContainingIgnoreCase(nombre: String, pageable: Pageable): Page<Producto>
     fun findByCategoria(categoria: String, pageable: Pageable): Page<Producto>
     fun findByActivoTrue(pageable: Pageable): Page<Producto>
     fun findByPrecioBetween(min: BigDecimal, max: BigDecimal, pageable: Pageable): Page<Producto>
     fun findByStockLessThan(stock: Int, pageable: Pageable): Page<Producto>
 
-    // ===== CONTEO Y EXISTENCIA =====
+    // ===== CONTEO / EXISTENCIA =====
     fun countByActivoTrue(): Long
     fun countByCategoria(categoria: String): Long
     fun countByPrecioGreaterThan(precio: BigDecimal): Long
     fun existsByNombre(nombre: String): Boolean
     fun existsByCategoriaAndNombre(categoria: String, nombre: String): Boolean
 
-    // ===== POR FECHAS =====
+    // ===== FECHAS =====
     fun findByFechaCreacionAfter(fecha: LocalDateTime): List<Producto>
     fun findByFechaCreacionBefore(fecha: LocalDateTime): List<Producto>
     fun findByFechaCreacionBetween(inicio: LocalDateTime, fin: LocalDateTime): List<Producto>
@@ -88,7 +87,7 @@ interface ProductoRepository : JpaRepository<Producto, Long> {
     fun findTop10ByOrderByFechaCreacionDesc(): List<Producto>
     fun findFirstByOrderByPrecioDesc(): Producto?
 
-    // ===== QUERIES PERSONALIZADAS (@Query) =====
+    // ===== QUERIES PERSONALIZADAS =====
     @Query("SELECT p FROM Producto p WHERE LOWER(p.nombre) LIKE LOWER(CONCAT('%', :term, '%')) OR LOWER(p.descripcion) LIKE LOWER(CONCAT('%', :term, '%'))")
     fun buscarPorTermino(@Param("term") term: String, pageable: Pageable): Page<Producto>
 
@@ -99,7 +98,7 @@ interface ProductoRepository : JpaRepository<Producto, Long> {
     @Query(value = "SELECT * FROM productos WHERE precio > :precio ORDER BY precio DESC", nativeQuery = true)
     fun findByPrecioMayorQueNativo(@Param("precio") precio: BigDecimal): List<Producto>
 
-    // ===== UPDATES/DELETES MASIVOS (@Modifying) =====
+    // ===== UPDATES / DELETES MASIVOS =====
     @Modifying
     @Query("UPDATE Producto p SET p.activo = :activo WHERE p.categoria = :categoria")
     fun actualizarActivoPorCategoria(@Param("categoria") categoria: String, @Param("activo") activo: Boolean): Int

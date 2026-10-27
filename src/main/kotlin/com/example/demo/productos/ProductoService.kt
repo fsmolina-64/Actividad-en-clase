@@ -2,57 +2,68 @@ package com.example.demo.productos
 
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.server.ResponseStatusException
 import java.math.BigDecimal
 
 @Service
 @Transactional
-class ProductoService(private val repository: ProductoRepository) {
+class ProductoService(private val productoRepository: ProductoRepository) {
 
-    fun guardar(producto: Producto): Producto = repository.save(producto)
+    // Obtener todos los productos
+    fun obtenerTodos(): List<Producto> = productoRepository.findAll()
 
-    fun obtenerTodos(): List<Producto> = repository.findAll()
+    // Obtener producto paginado
+    fun obtenerPaginados(pageable: Pageable): Page<Producto> = productoRepository.findAll(pageable)
 
-    fun obtenerPorId(id: Long): Producto? = repository.findById(id).orElse(null)
+    // Buscar producto por ID (lanza 404 si no existe)
+    fun obtenerPorId(id: Long): Producto = productoRepository.findById(id)
+        .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "No existe el producto con id $id") }
 
-    fun obtenerPorNombre(nombre: String): List<Producto> = 
-        repository.findByNombreContainingIgnoreCase(nombre)
+    // Buscar producto por SKU
+    fun obtenerPorSku(sku: String): Producto? = productoRepository.findBySku(sku)
 
-    fun obtenerPorCategoria(categoria: String): List<Producto> = 
-        repository.findByCategoria(categoria)
+    // Buscar productos por nombre (contiene, ignores case)
+    fun buscarPorNombre(nombre: String): List<Producto> =
+        productoRepository.findByNombreContainingIgnoreCase(nombre)
 
-    fun obtenerActivos(): List<Producto> = repository.findByActivoTrue()
+    // Crear / guardar producto
+    fun guardar(producto: Producto): Producto = productoRepository.save(producto)
 
-    fun obtenerPorSku(sku: String): Producto? = repository.findBySku(sku)
-
-    fun obtenerPorRangoPrecio(min: BigDecimal, max: BigDecimal): List<Producto> = 
-        repository.findByPrecioBetween(min, max)
-
-    fun obtenerPaginados(pageable: Pageable): Page<Producto> = repository.findAll(pageable)
-
-    fun actualizar(id: Long, datos: Producto): Producto? {
-        return repository.findById(id).map { existente ->
-            val actualizado = existente.copy(
-                nombre = datos.nombre,
-                descripcion = datos.descripcion,
-                precio = datos.precio,
-                stock = datos.stock,
-                categoria = datos.categoria,
-                sku = datos.sku,
-                activo = datos.activo,
-                fechaActualizacion = java.time.LocalDateTime.now()
-            )
-            repository.save(actualizado)
-        }.orElse(null)
+    // Actualizar producto existente
+    fun actualizar(id: Long, datos: Producto): Producto {
+        val existente = obtenerPorId(id)
+        val actualizado = existente.copy(
+            nombre = datos.nombre,
+            descripcion = datos.descripcion,
+            precio = datos.precio,
+            stock = datos.stock,
+            categoria = datos.categoria,
+            sku = datos.sku,
+            activo = datos.activo,
+            fechaActualizacion = java.time.LocalDateTime.now()
+        )
+        return productoRepository.save(actualizado)
     }
 
-    fun eliminar(id: Long): Boolean {
-        return repository.findById(id).map {
-            repository.delete(it)
-            true
-        }.orElse(false)
+    // Eliminar producto por ID
+    fun eliminar(id: Long) {
+        productoRepository.deleteById(id)
     }
 
-    fun existeSku(sku: String): Boolean = repository.existsBySku(sku)
+    // Buscar productos activos
+    fun obtenerActivos(): List<Producto> = productoRepository.findByActivoTrue()
+
+    // Buscar por categoría
+    fun obtenerPorCategoria(categoria: String): List<Producto> =
+        productoRepository.findByCategoria(categoria)
+
+    // Buscar por rango de precio
+    fun obtenerPorRangoPrecio(min: BigDecimal, max: BigDecimal): List<Producto> =
+        productoRepository.findByPrecioBetween(min, max)
+
+    // Verificar si existe SKU
+    fun existeSku(sku: String): Boolean = productoRepository.existsBySku(sku)
 }
